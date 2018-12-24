@@ -1,0 +1,12 @@
+﻿<ExtensionModel>
+	<Extension path="/MonoDevelop/Ide/Pads">
+		<Pad
+			id="MonoDevelop.FileServiceEvents.FileServiceEventsPad"
+			defaultLayout="*"
+			defaultPlacement="Center Bottom"
+			defaultStatus="AutoHide"
+			icon="md-console"
+			class="MonoDevelop.FileServiceEvents.FileServiceEventsPad"
+			_label="File Service Events" />
+	</Extension>
+</ExtensionModel>
