@@ -28,11 +28,11 @@ using Mono.Addins;
 
 [assembly: Addin ("FileServiceEvents",
 	Namespace = "MonoDevelop",
-	Version = "0.1",
+	Version = "0.2",
 	Category = "IDE extensions")]
 
 [assembly: AddinName ("FileService Events")]
 [assembly: AddinDescription ("Monitors FileService events")]
 
-[assembly: AddinDependency ("Core", "7.7")]
-[assembly: AddinDependency ("Ide", "7.7")]
+[assembly: AddinDependency ("Core", "8.1")]
+[assembly: AddinDependency ("Ide", "8.1")]

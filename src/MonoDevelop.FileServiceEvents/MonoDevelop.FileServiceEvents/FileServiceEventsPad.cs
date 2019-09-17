@@ -85,13 +85,22 @@ namespace MonoDevelop.FileServiceEvents
 		void OnEnabledChanged ()
 		{
 			if (enabled) {
-				FileService.AsyncEvents.FileCreated += FileCreated;
-				FileService.AsyncEvents.FileRemoved += FileRemoved;
-				FileService.AsyncEvents.FileRenamed += FileRenamed;
+				FileService.FileCreated += FileCreated;
+				FileService.FileRemoved += FileRemoved;
+				FileService.FileRenamed += FileRenamed;
+				FileService.FileChanged += FileChanged;
 			} else {
-				FileService.AsyncEvents.FileCreated -= FileCreated;
-				FileService.AsyncEvents.FileRemoved -= FileRemoved;
-				FileService.AsyncEvents.FileRenamed -= FileRenamed;
+				FileService.FileCreated -= FileCreated;
+				FileService.FileRemoved -= FileRemoved;
+				FileService.FileRenamed -= FileRenamed;
+				FileService.FileChanged -= FileChanged;
+			}
+		}
+
+		void FileChanged (object sender, FileEventArgs e)
+		{
+			foreach (FileEventInfo info in e) {
+				WriteText ("FileChanged: " + info.FileName);
 			}
 		}
 
