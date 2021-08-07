@@ -34,5 +34,5 @@ using Mono.Addins;
 [assembly: AddinName ("FileService Events")]
 [assembly: AddinDescription ("Monitors FileService events")]
 
-[assembly: AddinDependency ("Core", "8.1")]
-[assembly: AddinDependency ("Ide", "8.1")]
+[assembly: AddinDependency ("Core", "17.0")]
+[assembly: AddinDependency ("Ide", "17.0")]

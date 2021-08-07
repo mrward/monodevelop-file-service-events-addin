@@ -25,75 +25,76 @@
 // THE SOFTWARE.
 
 using System;
-using Gtk;
+using AppKit;
 using MonoDevelop.Components;
+using MonoDevelop.Components.Declarative;
 using MonoDevelop.Components.Docking;
 using MonoDevelop.Core;
 using MonoDevelop.Ide.Gui;
-using MonoDevelop.Ide.Gui.Components;
+using MonoDevelop.Ide.Gui.Components.LogView;
 
 namespace MonoDevelop.FileServiceEvents
 {
 	class FileServiceEventsPad : PadContent
 	{
-		static FileServiceEventsPad instance;
-		static readonly LogView logView = new LogView ();
+		LogViewController logViewController;
+		LogViewProgressMonitor progressMonitor;
+		NSView logView;
+		ToolbarToggleButtonItem enableButton;
+		ToolbarButtonItem clearButton;
 		bool enabled;
 
 		public FileServiceEventsPad ()
 		{
-			instance = this;
-		}
-
-		public static FileServiceEventsPad Instance {
-			get { return instance; }
 		}
 
 		protected override void Initialize (IPadWindow window)
 		{
-			DockItemToolbar toolbar = window.GetToolbar (DockPositionType.Right);
+			logViewController = new LogViewController ("LogMonitor");
+			logView = logViewController.Control.GetNativeWidget<NSView> ();
 
-			var enableButton = new CheckButton ();
-			enableButton.TooltipText = GettextCatalog.GetString ("Enable file events monitoring");
-			enableButton.Clicked += EnableButtonClicked;
-			toolbar.Add (enableButton);
+			progressMonitor = (LogViewProgressMonitor)logViewController.GetProgressMonitor ();
 
-			var clearButton = new Button (new ImageView (Ide.Gui.Stock.Broom, IconSize.Menu));
+			var toolbar = new PadToolbar ();
+
+			enableButton = new ToolbarToggleButtonItem (toolbar.Properties, nameof (enableButton));
+			enableButton.Icon = Stock.RunProgramIcon;
+			enableButton.Tooltip = GettextCatalog.GetString ("Enable file events monitoring");
+			enableButton.Toggled += EnableButtonClicked;
+			toolbar.AddItem (enableButton);
+
+			clearButton = new ToolbarButtonItem (toolbar.Properties, nameof (clearButton));
+			clearButton.Icon = Stock.Clear;
 			clearButton.Clicked += ButtonClearClicked;
-			clearButton.TooltipText = GettextCatalog.GetString ("Clear");
-			toolbar.Add (clearButton);
+			clearButton.Tooltip = GettextCatalog.GetString ("Clear");
+			toolbar.AddItem (clearButton);
 
-			toolbar.ShowAll ();
-			logView.ShowAll ();
+			window.SetToolbar (toolbar, DockPositionType.Right);
 		}
 
 		public override Control Control {
 			get { return logView; }
 		}
 
-		public static LogView LogView {
-			get { return logView; }
-		}
-
 		void EnableButtonClicked (object sender, EventArgs e)
 		{
-			enabled = !enabled;
+			enabled = enableButton.Active;
 
 			OnEnabledChanged ();
 		}
 
 		void OnEnabledChanged ()
 		{
+			FileService.FileCreated -= FileCreated;
+			FileService.FileRemoved -= FileRemoved;
+			FileService.FileMoved -= FileRenamed;
+			FileService.FileChanged -= FileChanged;
+
 			if (enabled) {
 				FileService.FileCreated += FileCreated;
 				FileService.FileRemoved += FileRemoved;
-				FileService.FileRenamed += FileRenamed;
+				FileService.FileMoved += FileRenamed;
 				FileService.FileChanged += FileChanged;
-			} else {
-				FileService.FileCreated -= FileCreated;
-				FileService.FileRemoved -= FileRemoved;
-				FileService.FileRenamed -= FileRenamed;
-				FileService.FileChanged -= FileChanged;
 			}
 		}
 
@@ -127,15 +128,27 @@ namespace MonoDevelop.FileServiceEvents
 
 		void ButtonClearClicked (object sender, EventArgs e)
 		{
-			logView.Clear ();
+			logViewController.Clear ();
 		}
 
-		static void WriteText (string message)
+		void WriteText (string message)
 		{
 			string fullMessage = string.Format ("{0}: {1}{2}", DateTime.Now.ToString ("u"), message, Environment.NewLine);
 			Runtime.RunInMainThread (() => {
-				logView.WriteText (null, fullMessage);
+				logViewController.WriteText (progressMonitor, fullMessage);
 			});
+		}
+
+		public override void Dispose ()
+		{
+			if (enableButton != null) {
+				enableButton.Clicked -= EnableButtonClicked;
+			}
+			if (clearButton != null) {
+				clearButton.Clicked -= ButtonClearClicked;
+			}
+
+			base.Dispose ();
 		}
 	}
 }
