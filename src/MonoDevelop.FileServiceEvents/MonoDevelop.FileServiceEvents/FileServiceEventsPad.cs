@@ -40,7 +40,8 @@ namespace MonoDevelop.FileServiceEvents
 		LogViewController logViewController;
 		LogViewProgressMonitor progressMonitor;
 		NSView logView;
-		ToolbarToggleButtonItem enableButton;
+		ToolbarButtonItem startButton;
+		ToolbarButtonItem stopButton;
 		ToolbarButtonItem clearButton;
 		bool enabled;
 
@@ -57,11 +58,19 @@ namespace MonoDevelop.FileServiceEvents
 
 			var toolbar = new PadToolbar ();
 
-			enableButton = new ToolbarToggleButtonItem (toolbar.Properties, nameof (enableButton));
-			enableButton.Icon = Stock.RunProgramIcon;
-			enableButton.Tooltip = GettextCatalog.GetString ("Enable file events monitoring");
-			enableButton.Toggled += EnableButtonClicked;
-			toolbar.AddItem (enableButton);
+			startButton = new ToolbarButtonItem (toolbar.Properties, nameof (startButton));
+			startButton.Icon = Stock.RunProgramIcon;
+			startButton.Clicked += StartButtonClicked;
+			startButton.Tooltip = GettextCatalog.GetString ("Start monitoring file events");
+			toolbar.AddItem (startButton);
+
+			stopButton = new ToolbarButtonItem (toolbar.Properties, nameof (stopButton));
+			stopButton.Icon = Stock.Stop;
+			stopButton.Clicked += StopButtonClicked;
+			stopButton.Tooltip = GettextCatalog.GetString ("Stop monitoring file events");
+			// Cannot disable the button before the underlying NSView is created.
+			//stopButton.Enabled = false;
+			toolbar.AddItem (stopButton);
 
 			clearButton = new ToolbarButtonItem (toolbar.Properties, nameof (clearButton));
 			clearButton.Icon = Stock.Clear;
@@ -70,31 +79,44 @@ namespace MonoDevelop.FileServiceEvents
 			toolbar.AddItem (clearButton);
 
 			window.SetToolbar (toolbar, DockPositionType.Right);
+
+			stopButton.Enabled = false;
 		}
 
 		public override Control Control {
 			get { return logView; }
 		}
 
-		void EnableButtonClicked (object sender, EventArgs e)
+		void StartButtonClicked (object sender, EventArgs e)
 		{
-			enabled = enableButton.Active;
+			enabled = true;
+			startButton.Enabled = false;
+			stopButton.Enabled = true;
+
+			OnEnabledChanged ();
+		}
+
+		void StopButtonClicked (object sender, EventArgs e)
+		{
+			enabled = false;
+			startButton.Enabled = true;
+			stopButton.Enabled = false;
 
 			OnEnabledChanged ();
 		}
 
 		void OnEnabledChanged ()
 		{
-			FileService.FileCreated -= FileCreated;
-			FileService.FileRemoved -= FileRemoved;
-			FileService.FileMoved -= FileRenamed;
-			FileService.FileChanged -= FileChanged;
-
 			if (enabled) {
 				FileService.FileCreated += FileCreated;
 				FileService.FileRemoved += FileRemoved;
 				FileService.FileMoved += FileRenamed;
 				FileService.FileChanged += FileChanged;
+			} else {
+				FileService.FileCreated -= FileCreated;
+				FileService.FileRemoved -= FileRemoved;
+				FileService.FileMoved -= FileRenamed;
+				FileService.FileChanged -= FileChanged;
 			}
 		}
 
@@ -141,8 +163,11 @@ namespace MonoDevelop.FileServiceEvents
 
 		public override void Dispose ()
 		{
-			if (enableButton != null) {
-				enableButton.Clicked -= EnableButtonClicked;
+			if (startButton != null) {
+				startButton.Clicked -= StartButtonClicked;
+			}
+			if (stopButton != null) {
+				stopButton.Clicked -= StopButtonClicked;
 			}
 			if (clearButton != null) {
 				clearButton.Clicked -= ButtonClearClicked;
