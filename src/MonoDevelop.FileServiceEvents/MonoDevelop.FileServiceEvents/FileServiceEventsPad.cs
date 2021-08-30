@@ -56,7 +56,7 @@ namespace MonoDevelop.FileServiceEvents
 
 			progressMonitor = (LogViewProgressMonitor)logViewController.GetProgressMonitor ();
 
-			var toolbar = new PadToolbar ();
+			var toolbar = new Toolbar ();
 
 			startButton = new ToolbarButtonItem (toolbar.Properties, nameof (startButton));
 			startButton.Icon = Stock.RunProgramIcon;
